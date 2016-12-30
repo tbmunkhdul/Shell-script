@@ -1,0 +1,12 @@
+REQ="/usr/sbin/exim"
+if [ -f "$REQ" ]; then
+LP="/var/log/exim_mainlog"
+TLOG_TF="exim"
+TRIG="50"
+
+# Max log entries to process at once for this rule
+MLOG=2500
+
+## EXIM
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -iw "rejected RCPT" | awk '{print$4}' | tr -d '[]' | grep -E '[.0-9]+' | tail -n $MLOG | uniq`
+fi

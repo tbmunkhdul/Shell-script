@@ -1,0 +1,12 @@
+REQ="/usr/sbin/sendmail"
+if [ -f "$REQ" ]; then
+LP="/var/log/maillog"
+TLOG_TF="sendmail"
+TRIG="50"
+
+# Max logs to process at onetime for this rule
+MLOG=2500
+
+## SENDMAIL
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -iv "IP name lookup" | grep -i sendmail | grep -i "check_rcpt" |  grep -i "relaying denied" | awk '{print$10}' | tr -d '[],' | grep -E '.[0-9]+' | tail -n $MLOG | uniq`
+fi

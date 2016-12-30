@@ -1,0 +1,12 @@
+REQ="/usr/sbin/ipop3d"
+if [ -f "$REQ" ]; then
+LP="/var/log/messages"
+TLOG_TF="pop3"
+TRIG="15"
+
+## pop3
+ARG_VAL1=`$TLOGP $LP $TLOG_TF.1 | grep ipop3d | grep -vw "ruser=" | grep -v "host=\[" | grep -iwf $PATTERN_FILE | tr '[]=' ' ' | tr -d '()' | awk '{print$16":"$11}' | grep -E '[0-9]+' > $TMP/.pop3`
+ARG_VAL2=`$TLOGP $LP $TLOG_TF.2 | grep ipop3d | grep -vw "ruser=" | grep "host=\[" | grep -iwf $PATTERN_FILE | tr '[]=' ' ' | tr -d '()' | awk '{print$15":"$11}' | grep -E '[0-9]+' >> $TMP/.pop3`
+ARG_VAL3=`$TLOGP $LP $TLOG_TF.3 | grep pop | grep -w "ruser=" | grep -iwf $PATTERN_FILE | tr '[]=' ' ' | tr -d '()' | awk '{print$18":"$20}' | grep -E '[0-9]+' >> $TMP/.pop3`
+ARG_VAL=`cat $TMP/.pop3`
+fi

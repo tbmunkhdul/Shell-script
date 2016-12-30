@@ -1,0 +1,31 @@
+REQ="/usr/sbin/ocwhttpd"
+if [ -f "$REQ" ]; then
+
+if [ -f "/var/log/httpd/error_log" ]; then
+	LP="/var/log/httpd/error_log"
+else
+	LP="/usr/local/apache/logs/error_log"
+fi
+TLOG_TF="apache"
+TRIG="50"
+
+
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -w error | grep -w user | grep -iwf $PATTERN_FILE | awk '{print$8":"$10}' | tr -d ']'`
+
+# Example working check of multiple apache logs [ensim]
+if [ -d "/home/virtual" ] && [ -d "/usr/lib/opcenter" ]; then
+
+	for dom in `cat /etc/virtualhosting/mappings/domainmap | awk '{print$1}'`; do
+	 if [ -f "/home/virtual/$dom/var/log/httpd/error_log" ]; then
+		# The TLOG_TF value must be unique for every log file processed
+		TLOG_TF="apache.$dom"
+		LP="/home/virtual/$dom/var/log/httpd/error_log"
+		ARG_VAL2=`/bin/nice -n 16 $TLOGP $LP $TLOG_TF | grep -w error | grep -w user | grep -iwf $PATTERN_FILE | awk '{print$8":"$10}' | tr -d ']'`
+	 fi
+	done
+
+	# Now just merge ARG_VAL and ARG_VAL2 under the variable name ARG_VAL
+	ARG_VAL=`echo $ARG_VAL $ARG_VAL2`
+fi
+
+fi

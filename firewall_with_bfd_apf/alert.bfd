@@ -1,0 +1,15 @@
+EB=0
+EV=`nice -n 19 tail -n 25000 $LP | grep $ATT_HOST | tail -n 250`
+cat <<EOF
+The remote system $ATT_HOST was found to have exceeded acceptable login failures on $HOSTNAME; there was $ATT_TRIG events to the service $MOD. As such the attacking host has been banned from further accessing this system. For the integrity of your host you should investigate this event as soon as possible.
+
+Executed ban command:
+$BCMD
+
+The following are event logs from $ATT_HOST on service $MOD (all time stamps are GMT $TMZ):
+
+$EV
+----
+- Thank you;
+root@$HOSTNAME
+EOF

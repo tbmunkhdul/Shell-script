@@ -1,0 +1,14 @@
+REQ="/usr/sbin/sshd"
+if [ -f "$REQ" ]; then
+LP="/var/log/secure"
+TLOG_TF="sshd"
+TRIG="10"
+TMP="/usr/local/bfd/tmp"
+
+## SSH
+ARG_VAL1=`$TLOGP $LP $TLOG_TF.1 | grep sshd | grep -viw "error: Bind" | sed 's/::ffff://' | grep -vi "invalid" | grep -vi "illegal" | grep -iwf $PATTERN_FILE | awk '{print$11":"$9}' | grep -E '[0-9]+' > $TMP/.sshd`
+ARG_VAL2=`$TLOGP $LP $TLOG_TF.2 | grep sshd | grep -viw "error: Bind" | sed 's/::ffff://' | grep -iw "failed password for illegal user" | grep -iwf $PATTERN_FILE | awk '{print$13":"$11}' | grep -E '[0-9]+' >> $TMP/.sshd`
+ARG_VAL3=`$TLOGP $LP $TLOG_TF.3 | grep sshd | grep -viw "error: Bind" | sed 's/::ffff://' | grep -iw "Invalid" | grep -iwv "Failed password for illegal user" | grep -iwf $PATTERN_FILE | awk '{print$10":"$8}' | grep -E '[0-9]+' >> $TMP/.sshd`
+ARG_VAL4=`$TLOGP $LP $TLOG_TF.4 | grep sshd | grep -viw "error: Bind" | sed 's/::ffff://' | grep -iw "Illegal user" | grep -iwv "Failed password for illegal user" | grep -iwf $PATTERN_FILE | awk '{print$10":"$8}' | grep -E '[0-9]+' >> $TMP/.sshd`
+ARG_VAL=`cat $TMP/.sshd`
+fi

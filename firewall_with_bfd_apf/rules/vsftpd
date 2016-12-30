@@ -1,0 +1,9 @@
+REQ="/usr/sbin/vsftpd"
+if [ -f "$REQ" ]; then
+LP="/var/log/messages"
+TLOG_TF="vsftpd"
+TRIG="1"
+
+## VSFTPD
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -w vsftpd | grep -iwf pattern.auth | awk '{print $13":"$12}'| tr -d '[]()?@'| cut -d = -f 2,4 | grep -E '[0-9]+'`
+fi

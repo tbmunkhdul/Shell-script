@@ -1,0 +1,88 @@
+#
+# BFD 0.9 [bfd@r-fx.org]
+###
+# Copyright (C) 1999-2004, R-fx Networks <proj@r-fx.org>
+# Copyright (C) 2004, Ryan MacDonald <ryan@r-fx.org>
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+###
+#
+# NOTE: This file should be edited with word/line wrapping off,
+#       if your using pico please start it with the -w switch.
+#       (e.g: pico -w filename)
+#
+
+# Installation path
+INSPATH="/usr/local/bfd"
+#INSPATH="/usr/local/sbin/bfd"
+#
+# Rules path
+RPATH="$INSPATH/rules"
+#
+# Track log path
+TLOGP="$INSPATH/tlog"
+#
+# Log file
+LOG="/var/log/bfd_log"
+
+# Do kernel logging
+USE_KLOG="1"
+#
+# System kernel log
+KLOG="/var/log/messages"
+#
+# System secure log
+SLOG="/var/log/secure"
+
+# Enable/disable user alerts [0 = off; 1 = on]
+ALERT_USR="1"
+#
+# User alert email address
+EMAIL_USR="tech@datacom.mn"
+#
+# User alert email; subject
+SUBJ_USR="Brute Force Warning for $HOSTNAME"
+#
+# Path to alert e-mail template
+ALERTF="$INSPATH/alert.bfd"
+
+
+# Pattern file containing authentication error strings; these strings are
+# greped from defined log files in a module to determine an event.
+PATTERN_FILE="$INSPATH/pattern.auth"
+#
+# Pass $ATT_HOST to firewall or other application/facility (tcpwrappers)
+# i.e: BCMD="echo ALL:$ATT_HOST >> /etc/hosts.deny"
+BCMD="/etc/apf/apf -d $ATT_HOST {bfd.$MOD}"
+#
+# A flat file where the bans actually reside to ensure the ban is still
+# in place; if not then we will reban, otherwise the attacker is ignored.
+BCMD_FILE="/etc/apf/deny_hosts.rules"
+#
+# Parse files searching for $ATT_HOST; if present assume trusted or already
+# banned - Add ignore files, deny files and such; line or space seperated.
+PRECHK_FILES="$INSPATH/exclude.files"
+
+# Grab the systems numeric timezone (e.g: -0500)
+TMZ=`date +"%z"`
+#
+# unix time for lock tracking
+UTIME=`date +"%s"`
+#
+# lock file path
+LOCK="$INSPATH/lock.utime"
+#
+# lock file timeout in seconds
+LOCK_TIMEOUT="620"

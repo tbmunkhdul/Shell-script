@@ -1,0 +1,9 @@
+REQ="/usr/sbin/pure-ftpd"
+if [ -f "$REQ" ]; then
+LP="/var/log/messages" 
+TLOG_TF="pure-ftpd" 
+TRIG="15" 
+
+## PURE-FTPD
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -w pure-ftpd | grep -i warning  | grep -iwf $PATTERN_FILE | awk '{print$6":"$12}' | tr -d '[]()?@' | grep -E '[0-9]+'`
+fi

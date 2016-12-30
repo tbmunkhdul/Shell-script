@@ -1,0 +1,60 @@
+BFD 0.9 [bfd@r-fx.org]
+
+ Copyright (C) 1999-2004, R-fx Networks <proj@r-fx.org>
+ Copyright (C) 2004, Ryan MacDonald <ryan@r-fx.org>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+1) Introduction:
+BFD is a modular shell script for parsing applicable logs and checking for
+authentication failures. There is not much complexity or detail to BFD yet and
+likewise it is very straight-forward in its installation, configuration and
+usage. The reason behind BFD is very simple; the fact there is little to no
+authentication and brute force auditing programs in the linux community that
+work in conjunction with a firewall or real-time facility to place bans.
+
+2) Installation:
+There is an included 'install.sh' script that installs all files to
+'/usr/local/bfd/' and places a 8-minute cronjob in '/etc/cron.d/bfd'. The setup
+is really as simple as that.
+
+3) Configuration:
+The configuration file for BFD is located at '/usr/local/bfd/conf.bfd'; it is
+very straight forward and the comments in themself explain what each option
+is for. Of the options, you should idealy configure the ALERT_USR toggle to
+enable or disable user email alerts and likewise in conjunction configure the
+EMAIL_USR var with your email addresses you would like to receive alerts at.
+
+An ignore file is present at '/usr/loca/bfd/ignore.hosts'; this is a line
+seperated file to place hosts into that you would like to be ignored for 
+authentication failures. An internal function will attempt to fetch all
+local ip's bound on the installed system and there-in internally ignore
+events appearing to be from such addresses.
+
+4) License:
+BFD is developed and supported on a volunteer basis by Ryan MacDonald
+[ryan@r-fx.org]
+
+BFD (brute force detection) is distributed under the GNU General Public
+License (GPL) without restrictions on usage or redistribution. The BFD
+copyright statement, and GNU GPL, "COPYING.GPL" are included in the top-level
+directory of the distribution. Credit must be given for derivative works as
+required under GNU GPL.
+
+5) Support:
+All inquiries relating to BFD should be directed to bfd@r-fx.org and/or check
+the BFD homepage at:
+http://www.r-fx.org/bfd.php

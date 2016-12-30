@@ -1,0 +1,202 @@
+#!/bin/sh
+#
+# BFD 0.9 [bfd@r-fx.org]
+###
+# Copyright (C) 1999-2004, R-fx Networks <proj@r-fx.org>
+# Copyright (C) 2004, Ryan MacDonald <ryan@r-fx.org>
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+###
+#
+INSPATH="/usr/local/bfd"
+CNF="$INSPATH/conf.bfd"
+V="0.9"
+APPN="BFD"
+BIP=1
+
+
+head() {
+echo "BFD version $V <bfd@r-fx.org>"
+echo "Copyright (C) 1999-2004, R-fx Networks <proj@r-fx.org>"
+echo "Copyright (C) 2004, Ryan MacDonald <ryan@r-fx.org>"
+echo "This program may be freely redistributed under the terms of the GNU GPL"
+echo "Modifi me"
+}
+echo $INSPATH
+echo $CNF
+if [ ! -f "$CNF" ]; then
+	head
+        echo "could not find \$CNF, aborting."
+        exit 1
+else
+        . $CNF
+fi
+
+eout() {
+arg=$1
+val=$2
+        if [ ! "$arg" == "" ]; then
+                echo "$(date +"%b %e %H:%M:%S") $(hostname -s) $APPN($$): $arg"
+                echo "$(date +"%b %e %H:%M:%S") $(hostname -s) $APPN($$): $arg" >> $LOG
+                if [ "$USE_KLOG" == "1" ] && [ "$val" == "le" ]; then
+                        echo "$(date +"%b %e %H:%M:%S") $(hostname -s) $APPN($$): $arg" >> $KLOG
+                fi
+        fi
+}
+
+pre() {
+if [ ! -f "$TLOGP" ]; then
+	eout "could not locate \$TLOGP, aborting."
+	exit 1
+fi
+if [ ! -d "$RPATH" ]; then
+	eout "could not locate \$RPATH, aborting."
+	exit 1
+fi
+if [ ! -f "$LOG" ]; then
+	touch $LOG
+	chmod 600 $LOG
+fi	
+if [ -f "$INSPATH/tmp/attack.pool" ]; then 
+	chmod 600 $INSPATH/tmp/attack.pool
+else
+	touch $INSPATH/tmp/attack.pool
+	chmod 600 $INSPATH/tmp/attack.pool
+fi
+}
+
+get_state() {
+##
+# Lock routine to prevent toe-stepping from multiple instances
+##
+if [ -f "$LOCK" ]; then
+        OVAL=`cat $LOCK`
+        DIFF=$[UTIME-OVAL]
+        if [ "$DIFF" -gt "$LOCK_TIMEOUT" ]; then
+                echo "$UTIME" > $LOCK
+                eout "cleared stale lock file file."
+        else
+                eout "locked subsystem, already running ? ($LOCK is $DIFF seconds old), aborting."
+                exit 1
+        fi
+else
+        echo "$UTIME" > $LOCK
+fi
+}
+
+alert() {
+if [ "$ALERT_USR" == "1" ]; then
+ if [ "$PVAB" == "" ]; then
+	. $ALERTF | mail -s "$SUBJ_USR" "$EMAIL_USR"
+ fi
+fi
+}
+
+apool_rgen() {
+rm -f $INSPATH/tmp/attack.pool.tmp $INSPATH/tmp/attack.pool.new
+touch $INSPATH/tmp/attack.pool.tmp
+touch $INSPATH/tmp/attack.pool.new
+chmod 600 $INSPATH/tmp/attack.pool.tmp $INSPATH/tmp/attack.pool.new
+for i in `cat $INSPATH/tmp/attack.pool | awk '{print$1}'`; do
+	val=`grep -ri $i $BCMD_FILE`
+	if [ "$val" == "" ]; then
+		echo $i >> $INSPATH/tmp/attack.pool.tmp
+	fi
+done
+cat $INSPATH/tmp/attack.pool | grep -vf $INSPATH/tmp/attack.pool.tmp > $INSPATH/tmp/attack.pool.new
+mv $INSPATH/tmp/attack.pool.new $INSPATH/tmp/attack.pool
+rm -f $INSPATH/tmp/attack.pool.tmp
+}
+
+check() {
+	for str in `ls $RPATH`; do
+		. $RPATH/$str
+		MOD="$str"
+		if [ ! "$ARG_VAL" == "" ]; then
+		for ihost in `echo $ARG_VAL | tr ' ' '\n' | tr ':' ' ' | awk '{print$1}' | grep -E '[.0-9]+' | uniq`; do
+			BIP=1
+			PRE_VAL=0
+			ATT_HOST=$ihost
+			PVAB=`cat $INSPATH/tmp/attack.pool | grep $ATT_HOST`
+			if [ "$PVAB" == "" ]; then
+			VAL=`echo $ARG_VAL | tr ' ' '\n' | tr ':' ' '  | awk '{print$1}' | grep -E '[.0-9]+' | grep -w $ATT_HOST | grep -c ""`
+			ATT_TRIG="$VAL"
+			if [ -f "$PRECHK_FILES" ]; then
+				for pfile in `cat $PRECHK_FILES | grep -v "#"`; do
+					if [ -f "$pfile" ]; then
+						pval=`cat $pfile | grep -v "#" | grep -w $ATT_HOST`
+						if [ ! "$pval" == "" ]; then
+							PRE_VAL="1"
+							BIP=0
+						fi
+					fi
+				done
+			fi
+	                if [ "$VAL" -gt "$TRIG" ]; then
+		                        echo "$ATT_HOST $MOD" >> $INSPATH/tmp/attack.pool
+					for ihostval in `ip addr list | tr '/' ' ' | grep inet | awk '{print$2}'`; do
+						if [ "$ATT_HOST" == "$ihostval" ]; then
+							eout "attack host is equal to local ip; alert dispatched [no ban]." le
+							BIP=0
+						fi
+					done
+					if [ ! "$BIP" == "0" ] && [ ! "$LAST" == "$ATT_HOST" ]; then
+			                        LAST=$ATT_HOST
+						. $CNF
+					        eout "{$MOD} $ATT_HOST exceeded login failures; executed ban command '$BCMD'." le
+						rm -f ; touch /usr/local/bfd/tmp/.cmd ; chmod 600 /usr/local/bfd/tmp/.cmd
+						echo $BCMD > /usr/local/bfd/tmp/.cmd
+						sh /usr/local/bfd/tmp/.cmd >> /dev/null 2>&1
+						rm -f /usr/local/bfd/tmp/.cmd
+						alert
+					elif [ "$BIP" == "0" ] && [ ! "$LAST" == "$ATT_HOST" ]; then
+			                        LAST=$ATT_HOST
+						. $CNF
+						eout "{$MOD} $ATT_HOST exceeded maximum login failures; host already banned or ignored." le
+					fi
+			fi
+
+		       fi
+			done
+		fi
+	done 
+}
+
+case "$1" in
+-s|--standard)
+	head
+	pre
+	get_state
+	apool_rgen
+	check
+	rm -f $LOCK
+	;;
+-q|--quiet)
+	$0 -s >> /dev/null 2>&1
+	;;
+-a|--attackpool)
+	head
+	pre
+	apool_rgen
+	cat $INSPATH/tmp/attack.pool | sort -n
+	;;
+*)
+	head
+	echo "usage: $0 [OPTION]"
+	echo "-s|--standard ........ run standard with output"
+	echo "-q|--quiet ........... run quiet with output hidden"
+	echo "-a|--attackpool ...... list all addresses that have attacked this host"
+esac
+exit 0

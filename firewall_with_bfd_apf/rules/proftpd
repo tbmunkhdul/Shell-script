@@ -1,0 +1,9 @@
+REQ="/usr/sbin/proftpd"
+if [ -f "$REQ" ]; then
+LP="/var/log/secure"
+TLOG_TF="proftpd"
+TRIG="15"
+
+## PROFTP
+ARG_VAL=`$TLOGP $LP $TLOG_TF | grep -w proftpd | grep -iwf $PATTERN_FILE | tr '[]' ' ' | tr -d '()' | awk '{print$10" "$13}' | tr -d ':' | awk '{print$1":"$2}' | grep -E '[0-9]+'`
+fi
